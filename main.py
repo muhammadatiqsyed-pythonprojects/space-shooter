@@ -3,8 +3,10 @@ import asyncio
 import pygame
 
 import settings
+from player import Player
 
 
+# main function
 async def main():
     # ------------------------------SET UP -----------------------------------------
     pygame.init()
@@ -15,8 +17,14 @@ async def main():
     pygame.display.set_caption(settings.WINDOW_CAPTION)
     clock = pygame.time.Clock()
 
-    # variables
+    # ---------variables---------
+    # loop variable
     running = True
+    # window bounds
+    window_rect = window.get_rect()
+
+    # player class object
+    player = Player()
 
     # game loop
     while running:
@@ -26,9 +34,11 @@ async def main():
             if event.type == pygame.QUIT:
                 running = False
         # ---------------------------------UPDATE----------------------------------------
-
+        player.update(dt, window_rect)
         # --------------------------------DRAW--------------------------------------------
         window.fill(settings.BG_COLOR)
+
+        player.draw(window)
 
         pygame.display.flip()
         await asyncio.sleep(0)
