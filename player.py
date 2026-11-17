@@ -9,13 +9,18 @@ class Player:
         self.rect.center = (settings.PLAYER_START_X, settings.PLAYER_START_Y)
         self.color = settings.PLAYER_COLOR
         self.speed = settings.PLAYER_SPEED
+        self.direction = 0
 
-    def update(self, dt, bounds):
+    def handle_input(self):
+        self.direction = 0
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.rect.centerx -= self.speed * dt
+            self.direction -= 1
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.rect.centerx += self.speed * dt
+            self.direction += 1
+
+    def update(self, dt, bounds):
+        self.rect.centerx += self.speed * dt * self.direction
         self.rect.clamp_ip(bounds)
 
     def draw(self, surface):
