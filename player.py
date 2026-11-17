@@ -10,6 +10,7 @@ class Player:
         self.color = settings.PLAYER_COLOR
         self.speed = settings.PLAYER_SPEED
         self.direction = 0
+        self.wants_to_shoot = False
 
     def handle_input(self):
         self.direction = 0
@@ -18,6 +19,7 @@ class Player:
             self.direction -= 1
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.direction += 1
+        self.wants_to_shoot = keys[pygame.K_SPACE]
 
     def update(self, dt, bounds):
         self.rect.centerx += self.speed * dt * self.direction
