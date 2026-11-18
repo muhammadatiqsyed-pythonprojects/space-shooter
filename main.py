@@ -36,6 +36,8 @@ async def main():
 
     # player class object
     player = Player()
+    # max lives
+    lives = settings.MAX_LIVES
 
     # game loop
     while running:
@@ -84,12 +86,21 @@ async def main():
             if enemy.is_off_screen():
                 enemy_list.remove(enemy)
 
+        # handling enemy and bullet collision
         for enemy in enemy_list[:]:
             for bullet in bullet_list[:]:
                 if enemy.rect.colliderect(bullet.rect):
                     enemy_list.remove(enemy)
                     bullet_list.remove(bullet)
                     break
+
+        # handling enemy and player collision
+        for enemy in enemy_list[:]:
+            if enemy.rect.colliderect(player.rect):
+                enemy_list.remove(enemy)
+                lives -= 1
+                print(lives)
+
         # --------------------------------DRAW--------------------------------------------
         window.fill(settings.BG_COLOR)
 
