@@ -5,24 +5,8 @@ import pygame
 
 import settings
 from bullet import Bullet
+from enemy import Enemy
 from player import Player
-
-
-class Enemy:
-    def __init__(self, start_pos):
-        self.rect = pygame.FRect(0, 0, settings.ENEMY_WIDTH, settings.ENEMY_HEIGHT)
-        self.rect.center = start_pos
-        self.color = settings.ENEMY_COLOR
-        self.speed = settings.ENEMY_SPEED
-
-    def update(self, dt):
-        self.rect.y += self.speed * dt
-
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
-
-    def is_off_screen(self):
-        return self.rect.top >= settings.WINDOW_HEIGHT
 
 
 # main function
