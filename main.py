@@ -84,6 +84,12 @@ async def main():
             if enemy.is_off_screen():
                 enemy_list.remove(enemy)
 
+        for enemy in enemy_list[:]:
+            for bullet in bullet_list[:]:
+                if enemy.rect.colliderect(bullet.rect):
+                    enemy_list.remove(enemy)
+                    bullet_list.remove(bullet)
+                    break
         # --------------------------------DRAW--------------------------------------------
         window.fill(settings.BG_COLOR)
 
