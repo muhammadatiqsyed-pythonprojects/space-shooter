@@ -25,9 +25,15 @@ async def main():
     # font
     game_font = pygame.font.Font(None, settings.FONT_SIZE)
     # Button class objects
-    title_button = Button(settings.TITLE_BUTTON_Y)
-    play_button = Button(settings.PLAY_BUTTON_Y)
-    score_button = Button(settings.SCORE_BUTTON_Y)
+    title_button = Button(
+        settings.TITLE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
+    )
+    play_button = Button(
+        settings.PLAY_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
+    )
+    score_button = Button(
+        settings.SCORE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
+    )
 
     # loop variable
     running = True
@@ -140,20 +146,8 @@ async def main():
         window.fill(settings.BG_COLOR)
 
         if game_state == "menu":
-            title_button.draw_text(
-                game_font,
-                "Welcome Space Shooter!",
-                settings.TEXT_COLOR,
-                settings.BUTTON_COLOR,
-                window,
-            )
-            play_button.draw_text(
-                game_font,
-                "Click or press P to Play!",
-                settings.TEXT_COLOR,
-                settings.BUTTON_COLOR,
-                window,
-            )
+            title_button.draw_text("Welcome Space Shooter!", window)
+            play_button.draw_text("Click or press P to Play!", window)
         elif game_state == "playing":
             player.draw(window)
 
@@ -181,27 +175,9 @@ async def main():
             )
             window.blit(lives_img, lives_rect)
         elif game_state == "gameover":
-            title_button.draw_text(
-                game_font,
-                "Game Over!",
-                settings.TEXT_COLOR,
-                settings.BUTTON_COLOR,
-                window,
-            )
-            play_button.draw_text(
-                game_font,
-                "Click or P to Play Again!",
-                settings.TEXT_COLOR,
-                settings.BUTTON_COLOR,
-                window,
-            )
-            score_button.draw_text(
-                game_font,
-                f"Score: {score}",
-                settings.TEXT_COLOR,
-                settings.BUTTON_COLOR,
-                window,
-            )
+            title_button.draw_text("Game Over!", window)
+            play_button.draw_text("Click or P to Play Again!", window)
+            score_button.draw_text(f"Score: {score}", window)
 
         pygame.display.flip()
         await asyncio.sleep(0)
