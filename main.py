@@ -87,6 +87,18 @@ async def main():
 
             player.update(dt, window_rect)
 
+            # difficulty grows with the score
+            level = score // settings.POINTS_PER_LEVEL + 1
+            spawn_interval = max(
+                settings.MIN_SPAWN_INTERVAL,
+                settings.ENEMY_SPAWN_INTERVAL
+                - settings.SPAWN_INTERVAL_STEP * (level - 1),
+            )
+            enemy_speed = min(
+                settings.MAX_ENEMY_SPEED,
+                settings.ENEMY_SPEED + settings.ENEMY_SPEED_STEP * (level - 1),
+            )
+
             # fire a bullet when space is held and the cooldown has finished.
             shoot_timer -= dt
             if player.wants_to_shoot and shoot_timer <= 0:
@@ -111,8 +123,8 @@ async def main():
                     ),
                     0,
                 )
-                enemy_list.append(Enemy(enemy_pos))
-                enemy_timer = settings.ENEMY_SPAWN_INTERVAL
+                enemy_list.append(Enemy(enemy_pos, enemy_speed))
+                enemy_timer = spawn_interval
 
             # handling enemies movement
             for enemy in enemy_list:
@@ -174,6 +186,11 @@ async def main():
                 )
             )
             window.blit(lives_img, lives_rect)
+            level_img = game_font.render(f"Lv {level}", True, settings.HUD_COLOR)
+            level_rect = level_img.get_rect(
+                midtop=(settings.WINDOW_WIDTH // 2, settings.HUD_MARGIN)
+            )
+            window.blit(level_img, level_rect)
         elif game_state == "gameover":
             title_button.draw_text("Game Over!", window)
             play_button.draw_text("Click or P to Play Again!", window)

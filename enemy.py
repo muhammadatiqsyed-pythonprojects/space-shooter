@@ -4,11 +4,11 @@ import settings
 
 
 class Enemy:
-    def __init__(self, start_pos):
+    def __init__(self, start_pos, speed):
         self.rect = pygame.FRect(0, 0, settings.ENEMY_WIDTH, settings.ENEMY_HEIGHT)
         self.rect.center = start_pos
         self.color = settings.ENEMY_COLOR
-        self.speed = settings.ENEMY_SPEED
+        self.speed = speed
 
     def update(self, dt):
         self.rect.y += self.speed * dt
