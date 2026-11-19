@@ -23,11 +23,11 @@ async def main():
 
     # ---------variables---------
     # font
-    game_font = pygame.font.Font(None, 40)
+    game_font = pygame.font.Font(None, settings.FONT_SIZE)
     # Button class objects
-    title_button = Button(settings.WINDOW_HEIGHT - 500)
-    play_button = Button(settings.WINDOW_HEIGHT - 400)
-    score_button = Button(settings.WINDOW_HEIGHT - 300)
+    title_button = Button(settings.TITLE_BUTTON_Y)
+    play_button = Button(settings.PLAY_BUTTON_Y)
+    score_button = Button(settings.SCORE_BUTTON_Y)
 
     # loop variable
     running = True
@@ -44,10 +44,10 @@ async def main():
 
     # player class object
     player = Player()
-    # max lives
-    lives = settings.MAX_LIVES
+    # current lives
+    lives = settings.PLAYER_MAX_LIVES
     # game states
-    game_state = "menu"  # other states are playing and gameover
+    game_state = "menu"  # "menu", "playing" or "gameover"
     # keeping the score
     score = 0
 
@@ -67,7 +67,7 @@ async def main():
                 or (event.type == pygame.KEYDOWN and event.key == pygame.K_p)
             ):
                 score = 0
-                lives = settings.MAX_LIVES
+                lives = settings.PLAYER_MAX_LIVES
                 shoot_timer = 0
                 enemy_timer = 0
                 bullet_list = []
@@ -81,7 +81,7 @@ async def main():
 
             player.update(dt, window_rect)
 
-            # creating and adding bullets to the bullet list initially immediately and then after cooldown time
+            # fire a bullet when space is held and the cooldown has finished.
             shoot_timer -= dt
             if player.wants_to_shoot and shoot_timer <= 0:
                 bullet_list.append(Bullet(player.rect.midtop))
@@ -95,7 +95,7 @@ async def main():
                 if bullet.is_off_screen():
                     bullet_list.remove(bullet)
 
-            # creating enemies with different center positions and adding them to the enemy list
+            # spawn an enemy at a random x at the top of the screen.
             enemy_timer -= dt
             if enemy_timer <= 0:
                 enemy_pos = (
@@ -123,7 +123,7 @@ async def main():
                     if enemy.rect.colliderect(bullet.rect):
                         enemy_list.remove(enemy)
                         bullet_list.remove(bullet)
-                        score += 1
+                        score += settings.POINTS_PER_KILL
                         break
 
             # handling enemy and player collision
@@ -141,10 +141,18 @@ async def main():
 
         if game_state == "menu":
             title_button.draw_text(
-                game_font, "Welcome Space Shooter!", "white", "darkblue", window
+                game_font,
+                "Welcome Space Shooter!",
+                settings.TEXT_COLOR,
+                settings.BUTTON_COLOR,
+                window,
             )
             play_button.draw_text(
-                game_font, "Click or press P to Play!", "white", "darkblue", window
+                game_font,
+                "Click or press P to Play!",
+                settings.TEXT_COLOR,
+                settings.BUTTON_COLOR,
+                window,
             )
         elif game_state == "playing":
             player.draw(window)
@@ -156,13 +164,15 @@ async def main():
                 enemy.draw(window)
 
             # HUD: score at the top left, lives at the top right
-            score_img = game_font.render(f"Score: {score}", True, "darkblue")
+            score_img = game_font.render(f"Score: {score}", True, settings.HUD_COLOR)
             score_rect = score_img.get_rect(
                 topleft=(settings.HUD_MARGIN, settings.HUD_MARGIN)
             )
             window.blit(score_img, score_rect)
 
-            lives_img = game_font.render(f"Lives: {max(lives, 0)}", True, "darkblue")
+            lives_img = game_font.render(
+                f"Lives: {max(lives, 0)}", True, settings.HUD_COLOR
+            )
             lives_rect = lives_img.get_rect(
                 topright=(
                     settings.WINDOW_WIDTH - settings.HUD_MARGIN,
@@ -171,16 +181,26 @@ async def main():
             )
             window.blit(lives_img, lives_rect)
         elif game_state == "gameover":
-            title_button.draw_text(game_font, "Gameover!", "white", "darkblue", window)
+            title_button.draw_text(
+                game_font,
+                "Game Over!",
+                settings.TEXT_COLOR,
+                settings.BUTTON_COLOR,
+                window,
+            )
             play_button.draw_text(
                 game_font,
                 "Click or P to Play Again!",
-                "white",
-                "darkblue",
+                settings.TEXT_COLOR,
+                settings.BUTTON_COLOR,
                 window,
             )
             score_button.draw_text(
-                game_font, f"Score:{score}", "white", "darkblue", window
+                game_font,
+                f"Score: {score}",
+                settings.TEXT_COLOR,
+                settings.BUTTON_COLOR,
+                window,
             )
 
         pygame.display.flip()
