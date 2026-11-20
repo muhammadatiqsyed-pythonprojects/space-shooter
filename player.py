@@ -4,7 +4,14 @@ import settings
 
 
 class Player:
+    image = None
+
     def __init__(self):
+        if Player.image is None:
+            img = pygame.image.load(settings.PLAYER_IMAGE).convert_alpha()
+            Player.image = pygame.transform.smoothscale(
+                img, (settings.PLAYER_WIDTH, settings.PLAYER_HEIGHT)
+            )
         self.rect = pygame.FRect(0, 0, settings.PLAYER_WIDTH, settings.PLAYER_HEIGHT)
         self.rect.center = (settings.PLAYER_START_X, settings.PLAYER_START_Y)
         self.color = settings.PLAYER_COLOR
@@ -26,4 +33,4 @@ class Player:
         self.rect.clamp_ip(bounds)
 
     def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
+        surface.blit(self.image, self.rect.topleft)
