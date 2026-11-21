@@ -2,8 +2,28 @@ import sys
 
 # GAME WINDOW CONSTANTS
 WINDOW_WIDTH = 480
-# taller canvas in the browser so phones use more of the screen
-WINDOW_HEIGHT = 854 if sys.platform == "emscripten" else 640
+DESKTOP_WINDOW_HEIGHT = 640
+MIN_WINDOW_HEIGHT = 640
+MAX_WINDOW_HEIGHT = 1100
+
+
+def _web_window_height():
+    """In the browser, match the canvas shape to the screen so the game fills it."""
+    try:
+        from platform import window  # pygbag's bridge to the browser
+
+        ratio = int(window.innerHeight) / int(window.innerWidth)
+        height = int(WINDOW_WIDTH * ratio)
+        return max(MIN_WINDOW_HEIGHT, min(MAX_WINDOW_HEIGHT, height))
+    except Exception:
+        return 854
+
+
+if sys.platform == "emscripten":
+    WINDOW_HEIGHT = _web_window_height()
+else:
+    WINDOW_HEIGHT = DESKTOP_WINDOW_HEIGHT
+
 FPS = 60
 BG_COLOR = (10, 10, 30)
 WINDOW_CAPTION = "SPACE SHOOTER"
