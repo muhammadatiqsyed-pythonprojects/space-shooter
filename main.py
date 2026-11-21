@@ -24,6 +24,12 @@ async def main():
     # ---------variables---------
     # font
     game_font = pygame.font.Font(None, settings.FONT_SIZE)
+    # background: tile the image once into a surface the size of the window
+    tile = pygame.image.load(settings.BACKGROUND_IMAGE).convert()
+    background = pygame.Surface((settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT))
+    for x in range(0, settings.WINDOW_WIDTH, tile.get_width()):
+        for y in range(0, settings.WINDOW_HEIGHT, tile.get_height()):
+            background.blit(tile, (x, y))
     # Button class objects
     title_button = Button(
         settings.TITLE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
@@ -155,7 +161,7 @@ async def main():
                 game_state = "gameover"
 
         # --------------------------------DRAW--------------------------------------------
-        window.fill(settings.BG_COLOR)
+        window.blit(background, (0, 0))
 
         if game_state == "menu":
             title_button.draw_text("Welcome Space Shooter!", window)

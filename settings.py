@@ -61,3 +61,4 @@ MAX_ENEMY_SPEED = 400
 PLAYER_IMAGE = "assets/images/player.png"
 BULLET_IMAGE = "assets/images/bullet.png"
 ENEMY_IMAGE = "assets/images/enemy.png"
+BACKGROUND_IMAGE = "assets/images/background.png"
