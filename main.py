@@ -30,6 +30,16 @@ async def main():
     for x in range(0, settings.WINDOW_WIDTH, tile.get_width()):
         for y in range(0, settings.WINDOW_HEIGHT, tile.get_height()):
             background.blit(tile, (x, y))
+
+    # sound effects
+    shoot_sound = pygame.mixer.Sound(settings.SHOOT_SOUND)
+    explosion_sound = pygame.mixer.Sound(settings.EXPLOSION_SOUND)
+    hit_sound = pygame.mixer.Sound(settings.HIT_SOUND)
+    game_over_sound = pygame.mixer.Sound(settings.GAME_OVER_SOUND)
+    for sound in (shoot_sound, hit_sound, game_over_sound):
+        sound.set_volume(settings.SFX_VOLUME)
+    explosion_sound.set_volume(settings.EXPLOSION_VOLUME)
+
     # Button class objects
     title_button = Button(
         settings.TITLE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
@@ -109,6 +119,7 @@ async def main():
             shoot_timer -= dt
             if player.wants_to_shoot and shoot_timer <= 0:
                 bullet_list.append(Bullet(player.rect.midtop))
+                shoot_sound.play()
                 shoot_timer = settings.PLAYER_SHOOT_COOLDOWN
             # handling movement of the bullet
             for bullet in bullet_list:
@@ -148,6 +159,7 @@ async def main():
                         enemy_list.remove(enemy)
                         bullet_list.remove(bullet)
                         score += settings.POINTS_PER_KILL
+                        explosion_sound.play()
                         break
 
             # handling enemy and player collision
@@ -155,10 +167,13 @@ async def main():
                 if enemy.rect.colliderect(player.rect):
                     enemy_list.remove(enemy)
                     lives -= 1
+                    if lives > 0:
+                        hit_sound.play()
 
             # game over check
             if lives <= 0:
                 game_state = "gameover"
+                game_over_sound.play()
 
         # --------------------------------DRAW--------------------------------------------
         window.blit(background, (0, 0))

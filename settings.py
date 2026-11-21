@@ -62,3 +62,11 @@ PLAYER_IMAGE = "assets/images/player.png"
 BULLET_IMAGE = "assets/images/bullet.png"
 ENEMY_IMAGE = "assets/images/enemy.png"
 BACKGROUND_IMAGE = "assets/images/background.png"
+
+# SOUND PATHS AND VOLUMES
+SHOOT_SOUND = "assets/sounds/shoot.ogg"
+EXPLOSION_SOUND = "assets/sounds/explosion.ogg"
+HIT_SOUND = "assets/sounds/hit.ogg"
+GAME_OVER_SOUND = "assets/sounds/gameover.ogg"
+SFX_VOLUME = 0.4
+EXPLOSION_VOLUME = 0.25
