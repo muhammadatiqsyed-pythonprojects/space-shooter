@@ -62,9 +62,33 @@ async def main():
         panel_rect.size, settings.PANEL_COLOR, settings.PANEL_ALPHA
     )
 
+    # pause button: the drawn rect, and a slightly bigger rect for easier tapping
+    pause_rect = pygame.Rect(
+        0, 0, settings.PAUSE_BUTTON_SIZE, settings.PAUSE_BUTTON_SIZE
+    )
+    pause_rect.topright = (
+        settings.WINDOW_WIDTH - settings.HUD_MARGIN,
+        settings.PAUSE_BUTTON_TOP,
+    )
+    pause_hit_rect = pause_rect.inflate(
+        settings.PAUSE_BUTTON_PADDING * 2, settings.PAUSE_BUTTON_PADDING * 2
+    )
+    pause_img = ui.make_pause_icon(
+        settings.PAUSE_BUTTON_SIZE,
+        settings.PANEL_COLOR,
+        settings.PAUSE_BUTTON_ALPHA,
+        settings.TEXT_COLOR,
+    )
+
     # red overlay used for the "life lost" flash
     flash = pygame.Surface((settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT))
     flash.fill(settings.HIT_FLASH_COLOR)
+
+    # dark overlay used while the game is paused
+    dim = pygame.Surface(
+        (settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT), pygame.SRCALPHA
+    )
+    dim.fill((0, 0, 0, settings.PAUSE_DIM_ALPHA))
 
     # loop variable
     running = True
@@ -83,13 +107,15 @@ async def main():
     # current level and level up message countdown (seconds)
     level = 1
     level_timer = 0
+    # True while a touch or click that began on the pause button is still held
+    pointer_on_button = False
 
     # player class object
     player = Player()
     # current lives
     lives = settings.PLAYER_MAX_LIVES
     # game states
-    game_state = "menu"  # "menu", "playing" or "gameover"
+    game_state = "menu"  # "menu", "playing", "paused" or "gameover"
     # keeping the score
     score = 0
     # best score of this session
@@ -103,7 +129,9 @@ async def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if game_state in ("menu", "gameover") and (
+
+            # start or restart from the menu or game over screen
+            elif game_state in ("menu", "gameover") and (
                 (
                     event.type == pygame.MOUSEBUTTONDOWN
                     and event.button == 1
@@ -118,14 +146,54 @@ async def main():
                 hit_timer = 0
                 level = 1
                 level_timer = 0
+                pointer_on_button = False
                 bullet_list = []
                 enemy_list = []
                 player = Player()
                 game_state = "playing"
                 pygame.mixer.music.play(-1)
 
+            # pause with the on-screen button (touch or mouse)
+            elif (
+                game_state == "playing"
+                and event.type == pygame.MOUSEBUTTONDOWN
+                and event.button == 1
+                and pause_hit_rect.collidepoint(event.pos)
+            ):
+                pointer_on_button = True
+                game_state = "paused"
+                pygame.mixer.music.pause()
+
+            # pause with the P key
+            elif (
+                game_state == "playing"
+                and event.type == pygame.KEYDOWN
+                and event.key == pygame.K_p
+            ):
+                game_state = "paused"
+                pygame.mixer.music.pause()
+
+            # pause automatically when the window or tab loses focus
+            elif game_state == "playing" and event.type == pygame.WINDOWFOCUSLOST:
+                game_state = "paused"
+                pygame.mixer.music.pause()
+
+            # resume with a tap, a click or the P key
+            elif game_state == "paused" and (
+                (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1)
+                or (event.type == pygame.KEYDOWN and event.key == pygame.K_p)
+            ):
+                game_state = "playing"
+                pygame.mixer.music.unpause()
+                # make the ship ignore the pointer until the finger is released
+                player.pointer_armed = False
+
+            # a separate check, so every button release is noticed
+            if event.type == pygame.MOUSEBUTTONUP:
+                pointer_on_button = False
+
         if game_state == "playing":
-            player.handle_input()
+            player.handle_input(pointer_on_button)
             # ---------------------------------UPDATE----------------------------------------
 
             player.update(dt, window_rect)
@@ -205,6 +273,15 @@ async def main():
                     if lives > 0:
                         hit_sound.play()
 
+            # an enemy that gets past the player costs a life
+            for enemy in enemy_list[:]:
+                if enemy.rect.top > player.rect.bottom:
+                    enemy_list.remove(enemy)
+                    lives -= 1
+                    hit_timer = settings.HIT_FLASH_TIME
+                    if lives > 0:
+                        hit_sound.play()
+
             # game over check
             if lives <= 0:
                 game_state = "gameover"
@@ -249,7 +326,7 @@ async def main():
                 (center_x, panel_rect.bottom - 25),
             )
             play_button.draw_text("Tap, click or P to Play!", window)
-        elif game_state == "playing":
+        elif game_state in ("playing", "paused"):
             player.draw(window)
 
             for bullet in bullet_list:
@@ -282,6 +359,9 @@ async def main():
             )
             window.blit(level_img, level_rect)
 
+            # pause button, under the lives text
+            window.blit(pause_img, pause_rect)
+
             # life lost feedback: fading red flash and a message
             if hit_timer > 0:
                 flash.set_alpha(
@@ -304,6 +384,24 @@ async def main():
                     f"LEVEL {level}",
                     settings.ACCENT_COLOR,
                     (center_x, settings.WINDOW_HEIGHT // 4),
+                )
+
+            # pause overlay, drawn last so it sits on top of everything
+            if game_state == "paused":
+                window.blit(dim, (0, 0))
+                ui.draw_text(
+                    window,
+                    title_font,
+                    "PAUSED",
+                    settings.ACCENT_COLOR,
+                    (center_x, settings.WINDOW_HEIGHT // 2 - 20),
+                )
+                ui.draw_text(
+                    window,
+                    small_font,
+                    "Tap, click or press P to resume",
+                    settings.TEXT_COLOR,
+                    (center_x, settings.WINDOW_HEIGHT // 2 + 30),
                 )
         elif game_state == "gameover":
             ui.draw_text(

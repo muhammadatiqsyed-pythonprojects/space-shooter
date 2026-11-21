@@ -18,11 +18,11 @@ class Player:
         self.speed = settings.PLAYER_SPEED
         self.direction = 0
         self.wants_to_shoot = False
-        # ignore the pointer until it has been released once, so the click
-        # that started the game doesn't immediately steer and fire
+        # ignore the pointer until it has been released once, so a tap that
+        # started the game or resumed it doesn't immediately steer and fire
         self.pointer_armed = False
 
-    def handle_input(self):
+    def handle_input(self, pointer_blocked=False):
         self.direction = 0
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -32,9 +32,10 @@ class Player:
         self.wants_to_shoot = keys[pygame.K_SPACE]
 
         # touch or mouse: hold to follow the pointer and fire
+        # (pointer_blocked is True while a touch that began on the pause button is held)
         if not pygame.mouse.get_pressed()[0]:
             self.pointer_armed = True
-        elif self.pointer_armed:
+        elif self.pointer_armed and not pointer_blocked:
             target_x = pygame.mouse.get_pos()[0]
             if target_x < self.rect.centerx - settings.TOUCH_DEADZONE:
                 self.direction = -1
