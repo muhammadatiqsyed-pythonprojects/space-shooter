@@ -4,6 +4,7 @@ import random
 import pygame
 
 import settings
+import ui
 from bullet import Bullet
 from button import Button
 from enemy import Enemy
@@ -22,8 +23,11 @@ async def main():
     clock = pygame.time.Clock()
 
     # ---------variables---------
-    # font
+    # fonts
     game_font = pygame.font.Font(None, settings.FONT_SIZE)
+    title_font = pygame.font.Font(None, settings.TITLE_FONT_SIZE)
+    small_font = pygame.font.Font(None, settings.SMALL_FONT_SIZE)
+
     # background: tile the image once into a surface the size of the window
     tile = pygame.image.load(settings.BACKGROUND_IMAGE).convert()
     background = pygame.Surface((settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT))
@@ -36,24 +40,31 @@ async def main():
     explosion_sound = pygame.mixer.Sound(settings.EXPLOSION_SOUND)
     hit_sound = pygame.mixer.Sound(settings.HIT_SOUND)
     game_over_sound = pygame.mixer.Sound(settings.GAME_OVER_SOUND)
-    for sound in (shoot_sound, hit_sound, game_over_sound):
+    for sound in (hit_sound, game_over_sound):
         sound.set_volume(settings.SFX_VOLUME)
+    shoot_sound.set_volume(settings.SHOOT_VOLUME)
     explosion_sound.set_volume(settings.EXPLOSION_VOLUME)
 
     # background music
     pygame.mixer.music.load(settings.MUSIC)
     pygame.mixer.music.set_volume(settings.MUSIC_VOLUME)
 
-    # Button class objects
-    title_button = Button(
-        settings.TITLE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
-    )
+    # play button (used on the menu and game over screens)
     play_button = Button(
         settings.PLAY_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
     )
-    score_button = Button(
-        settings.SCORE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
+
+    # menu and game over layout
+    center_x = settings.WINDOW_WIDTH // 2
+    panel_rect = pygame.Rect(0, 0, settings.PANEL_WIDTH, settings.PANEL_HEIGHT)
+    panel_rect.center = (center_x, settings.PANEL_CENTER_Y)
+    panel_img = ui.make_panel(
+        panel_rect.size, settings.PANEL_COLOR, settings.PANEL_ALPHA
     )
+
+    # red overlay used for the "life lost" flash
+    flash = pygame.Surface((settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT))
+    flash.fill(settings.HIT_FLASH_COLOR)
 
     # loop variable
     running = True
@@ -61,12 +72,17 @@ async def main():
     window_rect = window.get_rect()
     # bullet list
     bullet_list = []
-    # shoot cool down countdown(seconds)
+    # shoot cool down countdown (seconds)
     shoot_timer = 0
     # enemy list
     enemy_list = []
     # enemy creation timer
     enemy_timer = 0
+    # life lost feedback countdown (seconds)
+    hit_timer = 0
+    # current level and level up message countdown (seconds)
+    level = 1
+    level_timer = 0
 
     # player class object
     player = Player()
@@ -76,6 +92,9 @@ async def main():
     game_state = "menu"  # "menu", "playing" or "gameover"
     # keeping the score
     score = 0
+    # best score of this session
+    best_score = 0
+    new_best = False
 
     # game loop
     while running:
@@ -96,6 +115,9 @@ async def main():
                 lives = settings.PLAYER_MAX_LIVES
                 shoot_timer = 0
                 enemy_timer = 0
+                hit_timer = 0
+                level = 1
+                level_timer = 0
                 bullet_list = []
                 enemy_list = []
                 player = Player()
@@ -109,7 +131,10 @@ async def main():
             player.update(dt, window_rect)
 
             # difficulty grows with the score
-            level = score // settings.POINTS_PER_LEVEL + 1
+            new_level = score // settings.POINTS_PER_LEVEL + 1
+            if new_level > level:
+                level = new_level
+                level_timer = settings.LEVEL_MESSAGE_TIME
             spawn_interval = max(
                 settings.MIN_SPAWN_INTERVAL,
                 settings.ENEMY_SPAWN_INTERVAL
@@ -120,8 +145,12 @@ async def main():
                 settings.ENEMY_SPEED + settings.ENEMY_SPEED_STEP * (level - 1),
             )
 
-            # fire a bullet when space is held and the cooldown has finished.
+            # timers count down in seconds
             shoot_timer -= dt
+            hit_timer -= dt
+            level_timer -= dt
+
+            # fire a bullet when the player wants to shoot and the cooldown is over
             if player.wants_to_shoot and shoot_timer <= 0:
                 bullet_list.append(Bullet(player.rect.midtop))
                 shoot_sound.play()
@@ -135,7 +164,7 @@ async def main():
                 if bullet.is_off_screen():
                     bullet_list.remove(bullet)
 
-            # spawn an enemy at a random x at the top of the screen.
+            # spawn an enemy at a random x at the top of the screen
             enemy_timer -= dt
             if enemy_timer <= 0:
                 enemy_pos = (
@@ -172,12 +201,16 @@ async def main():
                 if enemy.rect.colliderect(player.rect):
                     enemy_list.remove(enemy)
                     lives -= 1
+                    hit_timer = settings.HIT_FLASH_TIME
                     if lives > 0:
                         hit_sound.play()
 
             # game over check
             if lives <= 0:
                 game_state = "gameover"
+                new_best = score > best_score
+                if new_best:
+                    best_score = score
                 game_over_sound.play()
                 pygame.mixer.music.stop()
 
@@ -185,8 +218,37 @@ async def main():
         window.blit(background, (0, 0))
 
         if game_state == "menu":
-            title_button.draw_text("Welcome Space Shooter!", window)
-            play_button.draw_text("Click or press P to Play!", window)
+            ui.draw_text(
+                window,
+                title_font,
+                "SPACE SHOOTER",
+                settings.ACCENT_COLOR,
+                (center_x, settings.TITLE_Y),
+            )
+            window.blit(panel_img, panel_rect)
+            ui.draw_text(
+                window,
+                game_font,
+                "HOW TO PLAY",
+                settings.TEXT_COLOR,
+                (center_x, panel_rect.top + 35),
+            )
+            for i, line in enumerate(settings.HOW_TO_PLAY_LINES):
+                ui.draw_text(
+                    window,
+                    small_font,
+                    line,
+                    settings.TEXT_COLOR,
+                    (center_x, panel_rect.top + 85 + i * settings.LINE_SPACING),
+                )
+            ui.draw_text(
+                window,
+                small_font,
+                f"Best score: {best_score}",
+                settings.ACCENT_COLOR,
+                (center_x, panel_rect.bottom - 25),
+            )
+            play_button.draw_text("Tap, click or P to Play!", window)
         elif game_state == "playing":
             player.draw(window)
 
@@ -196,7 +258,7 @@ async def main():
             for enemy in enemy_list:
                 enemy.draw(window)
 
-            # HUD: score at the top left, lives at the top right
+            # HUD: score at the top left, lives at the top right, level in the middle
             score_img = game_font.render(f"Score: {score}", True, settings.HUD_COLOR)
             score_rect = score_img.get_rect(
                 topleft=(settings.HUD_MARGIN, settings.HUD_MARGIN)
@@ -213,15 +275,76 @@ async def main():
                 )
             )
             window.blit(lives_img, lives_rect)
+
             level_img = game_font.render(f"Lv {level}", True, settings.HUD_COLOR)
             level_rect = level_img.get_rect(
                 midtop=(settings.WINDOW_WIDTH // 2, settings.HUD_MARGIN)
             )
             window.blit(level_img, level_rect)
+
+            # life lost feedback: fading red flash and a message
+            if hit_timer > 0:
+                flash.set_alpha(
+                    int(settings.HIT_FLASH_ALPHA * hit_timer / settings.HIT_FLASH_TIME)
+                )
+                window.blit(flash, (0, 0))
+                ui.draw_text(
+                    window,
+                    game_font,
+                    f"Life lost! {lives} left",
+                    settings.HUD_COLOR,
+                    (center_x, settings.WINDOW_HEIGHT // 3),
+                )
+
+            # level up message
+            if level_timer > 0:
+                ui.draw_text(
+                    window,
+                    title_font,
+                    f"LEVEL {level}",
+                    settings.ACCENT_COLOR,
+                    (center_x, settings.WINDOW_HEIGHT // 4),
+                )
         elif game_state == "gameover":
-            title_button.draw_text("Game Over!", window)
-            play_button.draw_text("Click or P to Play Again!", window)
-            score_button.draw_text(f"Score: {score}", window)
+            ui.draw_text(
+                window,
+                title_font,
+                "GAME OVER",
+                settings.ACCENT_COLOR,
+                (center_x, settings.TITLE_Y),
+            )
+            window.blit(panel_img, panel_rect)
+            ui.draw_text(
+                window,
+                game_font,
+                "YOUR SCORE",
+                settings.TEXT_COLOR,
+                (center_x, panel_rect.top + 50),
+            )
+            ui.draw_text(
+                window,
+                title_font,
+                str(score),
+                settings.TEXT_COLOR,
+                (center_x, panel_rect.top + 110),
+            )
+            if new_best:
+                ui.draw_text(
+                    window,
+                    game_font,
+                    "NEW BEST SCORE!",
+                    settings.ACCENT_COLOR,
+                    (center_x, panel_rect.top + 175),
+                )
+            else:
+                ui.draw_text(
+                    window,
+                    game_font,
+                    f"Best: {best_score}",
+                    settings.TEXT_COLOR,
+                    (center_x, panel_rect.top + 175),
+                )
+            play_button.draw_text("Tap, click or P to Retry!", window)
 
         pygame.display.flip()
         await asyncio.sleep(0)
