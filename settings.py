@@ -70,3 +70,6 @@ HIT_SOUND = "assets/sounds/hit.ogg"
 GAME_OVER_SOUND = "assets/sounds/gameover.ogg"
 SFX_VOLUME = 0.4
 EXPLOSION_VOLUME = 0.25
+
+MUSIC = "assets/sounds/music.ogg"
+MUSIC_VOLUME = 0.3

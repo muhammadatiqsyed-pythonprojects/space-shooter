@@ -40,6 +40,10 @@ async def main():
         sound.set_volume(settings.SFX_VOLUME)
     explosion_sound.set_volume(settings.EXPLOSION_VOLUME)
 
+    # background music
+    pygame.mixer.music.load(settings.MUSIC)
+    pygame.mixer.music.set_volume(settings.MUSIC_VOLUME)
+
     # Button class objects
     title_button = Button(
         settings.TITLE_BUTTON_Y, game_font, settings.TEXT_COLOR, settings.BUTTON_COLOR
@@ -96,6 +100,7 @@ async def main():
                 enemy_list = []
                 player = Player()
                 game_state = "playing"
+                pygame.mixer.music.play(-1)
 
         if game_state == "playing":
             player.handle_input()
@@ -174,6 +179,7 @@ async def main():
             if lives <= 0:
                 game_state = "gameover"
                 game_over_sound.play()
+                pygame.mixer.music.stop()
 
         # --------------------------------DRAW--------------------------------------------
         window.blit(background, (0, 0))
