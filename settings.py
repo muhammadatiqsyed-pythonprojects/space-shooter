@@ -1,6 +1,9 @@
+import sys
+
 # GAME WINDOW CONSTANTS
 WINDOW_WIDTH = 480
-WINDOW_HEIGHT = 640
+# taller canvas in the browser so phones use more of the screen
+WINDOW_HEIGHT = 854 if sys.platform == "emscripten" else 640
 FPS = 60
 BG_COLOR = (10, 10, 30)
 WINDOW_CAPTION = "SPACE SHOOTER"
@@ -29,10 +32,10 @@ PLAY_BUTTON_Y = WINDOW_HEIGHT * 4 // 5
 # MENU AND GAME OVER SCREEN CONSTANTS
 TITLE_FONT_SIZE = 56
 SMALL_FONT_SIZE = 28
-TITLE_Y = 110
+TITLE_Y = WINDOW_HEIGHT // 6
 PANEL_WIDTH = 400
 PANEL_HEIGHT = 280
-PANEL_CENTER_Y = 310
+PANEL_CENTER_Y = WINDOW_HEIGHT // 2 - 20
 PANEL_COLOR = (10, 10, 30)
 PANEL_ALPHA = 190
 ACCENT_COLOR = "gold"
@@ -99,8 +102,8 @@ EXPLOSION_SOUND = "assets/sounds/explosion.ogg"
 HIT_SOUND = "assets/sounds/hit.ogg"
 GAME_OVER_SOUND = "assets/sounds/gameover.ogg"
 SFX_VOLUME = 0.4
-SHOOT_VOLUME = 0.1
-EXPLOSION_VOLUME = 0.25
+SHOOT_VOLUME = 0.05
+EXPLOSION_VOLUME = 0.4
 
 MUSIC = "assets/sounds/music.ogg"
 MUSIC_VOLUME = 0.3

@@ -45,6 +45,11 @@ async def main():
     shoot_sound.set_volume(settings.SHOOT_VOLUME)
     explosion_sound.set_volume(settings.EXPLOSION_VOLUME)
 
+    # the shoot sound gets its own channel: a new shot replaces the previous
+    # one, so rapid shots never stack up and drown out the other sounds
+    pygame.mixer.set_reserved(1)
+    shoot_channel = pygame.mixer.Channel(0)
+
     # background music
     pygame.mixer.music.load(settings.MUSIC)
     pygame.mixer.music.set_volume(settings.MUSIC_VOLUME)
@@ -221,7 +226,7 @@ async def main():
             # fire a bullet when the player wants to shoot and the cooldown is over
             if player.wants_to_shoot and shoot_timer <= 0:
                 bullet_list.append(Bullet(player.rect.midtop))
-                shoot_sound.play()
+                shoot_channel.play(shoot_sound)
                 shoot_timer = settings.PLAYER_SHOOT_COOLDOWN
             # handling movement of the bullet
             for bullet in bullet_list:
